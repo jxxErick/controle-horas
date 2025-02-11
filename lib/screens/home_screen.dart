@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:horas_v1/helpers/hour_helpers.dart';
 
 import '../models/hour.dart';
 
@@ -71,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               size: 56,
                             ),
                             title: Text(
-                                "Data: ${model.data} - Horas: ${model.minutos}"),
+                                "Data: ${model.data} - Horas: ${HoursHelper.minutesToHours(model.minutos)}"),
                             subtitle: Text(model.descricao!),
                           )
                         ],
