@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               size: 56,
                             ),
                             title: Text(
-                                "Data: ${model.data}   Horas: ${HoursHelper.minutesToHours(model.minutos)}"),
+                                "Data: ${model.data} - Horas: ${HoursHelper.minutesToHours(model.minutos)}"),
                             subtitle: Text(model.descricao!),
                           )
                         ],
