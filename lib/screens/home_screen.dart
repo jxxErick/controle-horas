@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:horas_v1/helpers/hour_helpers.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 import '../models/hour.dart';
 
@@ -72,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               size: 56,
                             ),
                             title: Text(
-                                "Data: ${model.data}   Horas: ${HoursHelper.minutesToHours(model.minutos)}"),
+                                "Data: ${model.data} - Horas: ${HoursHelper.minutesToHours(model.minutos)}"),
                             subtitle: Text(model.descricao!),
                           )
                         ],
@@ -82,6 +83,82 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
+    );
+  }
+
+
+  showFormModal(Hour? model){
+    String title = "Adicionar";
+    String confirmationButton = "Salvar";
+    String skipButton = "Cancelar";
+
+    TextEditingController dataController = TextEditingController();
+    final dataMaskFormatter = MaskTextInputFormatter(mask: '##/##/####');
+    TextEditingController minutesController = TextEditingController();
+    final minutesMaskFormatter = MaskTextInputFormatter(mask: '##:##');
+    TextEditingController descricaoController = TextEditingController();
+
+    if(model != null){
+      title = "Editar";
+      confirmationButton = "Atualizar";
+      dataController.text = model.data;
+      minutesController.text = HoursHelper.minutesToHours(model.minutos);
+      if(model.descricao != null){
+        descricaoController.text = model.descricao!;
+      }
+    }
+
+    showModalBottomSheet(context: context,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (context){
+      return Container(
+        height: MediaQuery.of(context).size.height,
+        padding: EdgeInsets.all(16),
+        child: ListView(
+          children: [
+            Text(title, style: Theme.of(context).textTheme.headlineSmall,),
+            TextFormField(
+              controller: dataController,
+              inputFormatters: [dataMaskFormatter],
+              keyboardType: TextInputType.datetime,
+              decoration: InputDecoration(
+                labelText: 'Data',
+                hintText: 'DD/MM/AAAA',
+              ),
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: minutesController,
+              inputFormatters: [minutesMaskFormatter],
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Horas',
+                hintText: 'HH:MM',
+              ),
+            ),
+            SizedBox(height: 16,),
+            TextFormField(
+              controller: descricaoController,
+              decoration: InputDecoration(
+                labelText: 'Descrição',
+              ),
+            ),
+            SizedBox(height: 16,),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(onPressed: (){
+                  Navigator.pop(context);
+                }, child: Text(skipButton)),
+                SizedBox(width: 8,),
+                ElevatedButton(onPressed: () {}, child: Text(confirmationButton),),
+              ],
+            ),
+            SizedBox(height: 180,)
+          ],
+        )
+      );
+    },
     );
   }
 
