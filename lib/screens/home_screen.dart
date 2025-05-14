@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:horas_v1/helpers/hour_helpers.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../models/hour.dart';
 
@@ -87,81 +88,131 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  showFormModal(Hour? model){
+  showFormModal({Hour? model}) {
     String title = "Adicionar";
     String confirmationButton = "Salvar";
     String skipButton = "Cancelar";
 
     TextEditingController dataController = TextEditingController();
     final dataMaskFormatter = MaskTextInputFormatter(mask: '##/##/####');
-    TextEditingController minutesController = TextEditingController();
-    final minutesMaskFormatter = MaskTextInputFormatter(mask: '##:##');
+    TextEditingController minutosController = TextEditingController();
+    final minutosMaskFormatter = MaskTextInputFormatter(mask: '##:##');
     TextEditingController descricaoController = TextEditingController();
 
-    if(model != null){
-      title = "Editar";
-      confirmationButton = "Atualizar";
+    if (model != null) {
+      title = "Editando";
       dataController.text = model.data;
-      minutesController.text = HoursHelper.minutesToHours(model.minutos);
-      if(model.descricao != null){
+      minutosController.text = HoursHelper.minutesToHours(model.minutos);
+      if (model.descricao != null) {
         descricaoController.text = model.descricao!;
       }
     }
 
-    showModalBottomSheet(context: context,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-        builder: (context){
-      return Container(
-        height: MediaQuery.of(context).size.height,
-        padding: EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            Text(title, style: Theme.of(context).textTheme.headlineSmall,),
-            TextFormField(
-              controller: dataController,
-              inputFormatters: [dataMaskFormatter],
-              keyboardType: TextInputType.datetime,
-              decoration: InputDecoration(
-                labelText: 'Data',
-                hintText: 'DD/MM/AAAA',
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height,
+          padding: const EdgeInsets.all(32),
+          child: ListView(
+            children: [
+              Text(title, style: Theme.of(context).textTheme.headlineSmall),
+              TextFormField(
+                controller: dataController,
+                keyboardType: TextInputType.datetime,
+                decoration: const InputDecoration(
+                  hintText: '01/01/2024',
+                  labelText: 'Data',
+                ),
+                inputFormatters: [dataMaskFormatter],
               ),
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              controller: minutesController,
-              inputFormatters: [minutesMaskFormatter],
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Horas',
-                hintText: 'HH:MM',
+              const SizedBox(
+                height: 16,
               ),
-            ),
-            SizedBox(height: 16,),
-            TextFormField(
-              controller: descricaoController,
-              decoration: InputDecoration(
-                labelText: 'Descrição',
+              TextFormField(
+                controller: minutosController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                    hintText: '00:00', labelText: 'Horas trabalhadas'),
+                inputFormatters: [minutosMaskFormatter],
               ),
-            ),
-            SizedBox(height: 16,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(onPressed: (){
-                  Navigator.pop(context);
-                }, child: Text(skipButton)),
-                SizedBox(width: 8,),
-                ElevatedButton(onPressed: () {}, child: Text(confirmationButton),),
-              ],
-            ),
-            SizedBox(height: 180,)
-          ],
-        )
-      );
-    },
+              const SizedBox(
+                height: 16,
+              ),
+              TextFormField(
+                controller: descricaoController,
+                keyboardType: TextInputType.text,
+                decoration: const InputDecoration(
+                    hintText: 'Lembrete do que você fez',
+                    labelText: 'Descrição'),
+              ),
+              const SizedBox(
+                height: 16,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      skipButton,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 16,
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Hour hour = Hour(
+                          id: const Uuid().v1(),
+                          data: dataController.text,
+                          minutos: HoursHelper.hoursToMinutes(
+                            minutosController.text,
+                          ));
+
+                      if (descricaoController.text != "") {
+                        hour.descricao = descricaoController.text;
+                      }
+
+                      if (model != null) {
+                        hour.id = model.id;
+                      }
+
+                      firestore
+                          .collection(widget.user.uid)
+                          .doc(hour.id)
+                          .set(hour.toMap());
+
+                      refresh();
+
+                      Navigator.pop(context);
+                    },
+                    child: Text(confirmationButton),
+                  ),
+                ],
+              ),
+              const SizedBox(
+                height: 180,
+              )
+            ],
+          ),
+        );
+      },
     );
   }
 
-  void remove(Hour model) {}
+  void remove(Hour model) {
+    firestore.collection(widget.user.uid).doc(model.id).delete();
+    refresh();
+  }
+
+  void refresh() {}
 
 }
